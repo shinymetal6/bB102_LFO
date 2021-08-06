@@ -60,10 +60,6 @@ void InitialParameters(void)
 	SystemFlags.lfo_detune[1] = 50;
 	SystemFlags.lfo_detune[2] = 50;
 	SystemFlags.lfo_detune[3] = 50;
-	SystemFlags.Atime = 20;
-	SystemFlags.Dtime = 40;
-	SystemFlags.Rtime = 60;
-	SystemFlags.Sval  = 20;
 
 	SystemFlags.menu_state = MENU_STATE_TOP;
 	SystemFlags.menu_line_counter = 1;
@@ -117,7 +113,6 @@ void bB101_Vco_Init(void)
 #endif
 	SystemFlags.systick_counter = 0;
 
-	SystemFlags.delay_value = 0;
 	HAL_ADC_Start_DMA(CONTROL_ADC1, (uint32_t *)&SystemFlags.control_adc1_buf[0], 4);
 	HAL_ADC_Start_DMA(CONTROL_ADC2, (uint32_t *)&SystemFlags.control_adc2_buf[0], 4);
 	HAL_TIM_Base_Start_IT(CONTROL_TIMER);
@@ -135,7 +130,9 @@ void bB101_Vco_Init(void)
 	HAL_DAC_Start_DMA(AUDIO_DAC, DAC_CHANNEL_1, (uint32_t* )signal_out, SIGNAL_LEN, DAC_ALIGN_12B_R);
 	HAL_DAC_Start_DMA(AUDIO_DAC, DAC_CHANNEL_2, (uint32_t* )envelope_out, ENVELOPE_MAXLEN, DAC_ALIGN_12B_R);
 	HAL_TIM_Base_Start(AUDIO_TIMER);
-	HAL_TIM_Base_Start(ENVELOPE_TIMER);
+	HAL_TIM_PWM_Start_IT(&BASE_ENVELOPE_TIMER,TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start_IT(&ENVELOPE_TIMER,TIM_CHANNEL_1);
+
 }
 
 void bB101_Vco_AudioLoop(void)

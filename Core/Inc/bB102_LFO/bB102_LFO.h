@@ -16,9 +16,10 @@ extern	I2C_HandleTypeDef hi2c1;
 
 extern	SPI_HandleTypeDef hspi1;
 
+extern	TIM_HandleTypeDef htim2;
+extern	TIM_HandleTypeDef htim3;
 extern	TIM_HandleTypeDef htim6;
 extern	TIM_HandleTypeDef htim7;
-extern	TIM_HandleTypeDef htim15;
 extern	TIM_HandleTypeDef htim16;
 
 extern	ADC_HandleTypeDef hadc1;
@@ -48,7 +49,8 @@ extern	ADC_HandleTypeDef hadc2;
 #define	BACKLIGHT_TIMER					htim16
 #define	CONTROL_ADC1					&hadc1
 #define	CONTROL_ADC2					&hadc2
-#define	ENVELOPE_TIMER					&htim15
+#define	BASE_ENVELOPE_TIMER				htim2
+#define	ENVELOPE_TIMER					htim3
 #define	DAC1_OUT_HANDLE					hdma_dac1_ch1
 #define	DAC2_OUT_HANDLE					hdma_dac1_ch2
 
@@ -84,11 +86,6 @@ typedef struct _SystemFlagsDef
 	uint8_t 	lfo_detune[4];
 	uint8_t 	lfo_volume[4];	// range 0..10
 	uint8_t 	lfo_duty_percent[4];
-	uint8_t 	Atime,Dtime,Sval,Rtime;
-	uint8_t 	vcf_flags;
-	uint8_t 	effect_flags;
-	uint8_t 	delay_flags;
-	uint16_t 	delay_value;
 	uint8_t 	control_flags;
 	uint8_t 	program_number;
 	uint8_t 	systick_counter;
@@ -103,22 +100,16 @@ typedef struct _SystemFlagsDef
 	uint8_t		sysex_len;
 	uint16_t 	control_adc1_buf[4];
 	uint16_t 	control_adc2_buf[4];
-	float 		delay_sample_multiplier,delay_feedback_multiplier;
-	uint16_t 	last_tuner_val;
-	float 		tuner_delta_multiplier;
-	uint16_t 	last_fm_val;
-	float 		fm_delta_multiplier;
-	float 		oscillator_tuner_constant;
-	uint16_t	delay_insertion_pointer;
-	uint16_t	delay_extraction_pointer;
-	float 		cv_voltage;
-	float 		cv_voltage_div_10;
+	uint16_t	env_timing;
+	uint32_t	env_counter;
+	uint32_t	env_prescaler;
+	uint16_t 	last_env_timing_val;
 }SystemFlagsDef;
 
 /*
 ADSR_TIME_UNIT is 1 / 44100 *128 = 2,902494331 mSec. , rounded to 3 mSec.
  */
-#define	ADSR_TIME_UNIT	(1 / SAMPLE_FREQUENCY ) *  HALF_NUMBER_OF_AUDIO_SAMPLES))
+//#define	ADSR_TIME_UNIT	(1 / SAMPLE_FREQUENCY ) *  HALF_NUMBER_OF_AUDIO_SAMPLES))
 
 /* oscillator_flags values */
 
@@ -141,9 +132,11 @@ ADSR_TIME_UNIT is 1 / 44100 *128 = 2,902494331 mSec. , rounded to 3 mSec.
 /*
 #define	CONTROL_OSC_FROM_CV			0x01
 #define	CONTROL_OSC_FROM_MIDI		0x02
-*/
 #define	CONTROL_FM					0x04
-#define	CONTROL_VCA					0x08
+*/
+#define	CONTROL_VCA					0x01
+#define	CONTROL_ENVELOPE_LED		0x04
+#define	CONTROL_ENVELOPE_FLAG		0x08
 #define	CONTROL_ADC_FLAG			0x10
 #define	CONTROL_TICK_FLAG			0x20
 #define	CONTROL_SYSTICK_FLAG		0x40
@@ -155,50 +148,6 @@ ADSR_TIME_UNIT is 1 / 44100 *128 = 2,902494331 mSec. , rounded to 3 mSec.
 #define	AUDIO_LFO_HALF_FLAG			0x40
 #define	AUDIO_LFO_READY_FLAG		0x80
 
-/* vcf_flags values */
-/*
-#define	VCF_CONTROL_MASK			0x0F
-#define	VCF_CONTROL_POT				0x01
-#define	VCF_CONTROL_MIDI			0x02
-#define	VCF_CONTROL_CV				0x04
-#define	VCF_TYPE_LP					0x10
-#define	VCF_TYPE_BP					0x20
-#define	VCF_TYPE_HP					0x40
-#define	VCF_ENABLED					0x80
-#define	VCF_TYPE_MASK				(VCF_TYPE_BP | VCF_TYPE_LP | VCF_TYPE_HP)
-*/
-/* effect_flags */
-/*
-#define	EFFECT_MOOG1				0x01
-#define	EFFECT_MOOG2				0x02
-*/
-/* delay_flags values */
-
-/*
-#define	DLY_FLANGER_POT				0x00
-#define	DLY_REVERB_POT				0x01
-#define	DLY_FLANGER_MIDI			0x02
-#define	DLY_REVERB_MIDI				0x03
-#define	DLY_FLANGER_CV				0x04
-#define	DLY_REVERB_CV				0x05
-#define	DLY_FLANGER_DIGITAL			0x06
-#define	DLY_REVERB_DIGITAL			0x07
-*/
-/*
-#define	DLY_MIXER_FLANGER_POT		0x00
-#define	DLY_MIXER_REVERB_POT		0x01
-#define	DLY_MIXER_FLANGER_MIDI		0x02
-#define	DLY_MIXER_REVERB_MIDI		0x03
-#define	DLY_ENABLED					0x80
-
-#define	DLY_MIXER_POT_MASK			0x02
-#define	DLY_MIXER_MIDI_MASK			0x02
-#define	DLY_REVERB_NFLANGER_BIT		1
-#define	DLY_TYPE_MASK				0x0f
-
-#define	DELAY_MAX_VAL				900
-#define	DELAY_UNIT					(16383.0F / (float )DELAY_MAX_VAL)
-*/
 /* Buttons */
 #define	TACT0_BUTTON				0x01
 #define	TACT1_BUTTON				0x02
@@ -262,6 +211,7 @@ extern	void bB101_Vco_ControlLoop(void);
 
 extern	void SysTimer_callback(void);
 extern	void ADC_callback(void);
+extern	void Envelope_callback(void);
 
 extern	void store_system_parameters(void);
 extern	void InitFromFlash(void);

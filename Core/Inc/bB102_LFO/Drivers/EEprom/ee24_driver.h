@@ -18,15 +18,10 @@ typedef struct _ProgramTypeDef
 	uint8_t 	program_flags1;
 	uint8_t 	oscillator_flagsh,oscillator_flagsl;
 	uint8_t 	control_flagsh,control_flagsl;
-	uint8_t 	vcf_flagsh,vcf_flagsl;
-	uint8_t 	effect_flagsh,effect_flagsl;
-	uint8_t 	delay_flagsh,delay_flagsl;
 	uint8_t		lfo_wavesh,lfo_wavesl;
-	uint8_t 	delay_value;
 	uint8_t 	lfo_duty_percent[4];
 	uint8_t 	lfo_detune[4];
 	uint8_t 	lfo_volume[4];	// range 0..10
-	uint8_t 	Atime,Dtime,Sval,Rtime;
 }ProgramTypeDef;
 
 extern	ProgramTypeDef	Program;

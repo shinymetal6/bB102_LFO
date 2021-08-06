@@ -220,7 +220,6 @@ uint8_t	lfo_number, offset;
 		offset = SystemFlags.sysex_buffer[2] & 0x03;
 		SystemFlags.lfo_volume[offset] = SystemFlags.sysex_buffer[3];
 		ChangeLfoVolume(offset);
-		//DisplayVolume();
 	}
 
 	if ( SystemFlags.sysex_buffer[1] == OSC_ALLVOLUME_CMD)

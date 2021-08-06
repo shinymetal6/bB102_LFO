@@ -598,18 +598,6 @@ uint16_t	color;
 	ST7735_WriteString(LINE_X_INPUT+14,LINE_Y_INPUT,"a", Font_7x10, color, ST7735_BLACK);
 }
 
-void view_fm(void)
-{
-uint16_t	color;
-
-	if (( SystemFlags.control_flags & CONTROL_FM) == CONTROL_FM)
-		color = ST7735_DARKGREEN;
-	else
-		color = ST7735_GREY;
-	ST7735_WriteString(LINE_X_INPUT+21,LINE_Y_INPUT,"f", Font_7x10, color, ST7735_BLACK);
-}
-
-
 void draw_filter_params(void)
 {
 }
@@ -819,11 +807,6 @@ ScreenTypeDef	*current_screen;
 			}
 			if ( SystemFlags.menu_line_counter == 3)
 			{
-				if (( SystemFlags.control_flags & CONTROL_FM) == CONTROL_FM)
-					SystemFlags.control_flags &= ~CONTROL_FM;
-				else
-					SystemFlags.control_flags |= CONTROL_FM;
-				view_fm();
 			}
 
 			if ( SystemFlags.menu_line_counter == 4)
@@ -963,7 +946,6 @@ uint8_t	i;
 	draw_filter_params();
 	draw_effect();
 	view_am();
-	view_fm();
 }
 
 void MenusDrawStatus(void)

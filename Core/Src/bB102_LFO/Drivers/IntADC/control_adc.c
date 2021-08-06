@@ -25,6 +25,23 @@ static void draw_led(void)
 	}
 }
 
+static void draw_envelope_led(uint8_t state)
+{
+	if ( state == 1 )
+	{
+		ST7735_FillRectangle(1, 61, 4, 4, ST7735_RED);
+		ST7735_DrawPixel(1, 61, ST7735_BLACK);
+		ST7735_DrawPixel(4, 61, ST7735_BLACK);
+		ST7735_DrawPixel(1, 64, ST7735_BLACK);
+		ST7735_DrawPixel(4, 64, ST7735_BLACK);
+	}
+	else
+	{
+		SystemFlags.led_counter = 0;
+		ST7735_FillRectangle(1, 61, 4, 4, ST7735_BLACK);
+	}
+}
+
 void bB101_Vco_ControlLoop(void)
 {
 	if (( SystemFlags.control_flags & CONTROL_TICK_FLAG ) == CONTROL_TICK_FLAG)
@@ -113,7 +130,36 @@ void bB101_Vco_ControlLoop(void)
 			SystemFlags.last_tuner_val = (LFO_FREQUENCY_POTCONTROL >> 4 ) << 4;
 		}
 */
+		if ( SystemFlags.last_env_timing_val != ((ENV_TIMING_POTCONTROL >> 4 ) << 4) )
+		{
+			SystemFlags.last_env_timing_val = (ENV_TIMING_POTCONTROL >> 4 ) << 4;
+			SystemFlags.env_timing = 0xffff - ( ENV_TIMING_POTCONTROL << 4 );
+			if ( SystemFlags.env_timing < 1000 )
+				SystemFlags.env_timing = 1000;
+		}
+
 		SystemFlags.control_flags &= ~CONTROL_ADC_FLAG;
+	}
+	if (( SystemFlags.control_flags & CONTROL_ENVELOPE_FLAG ) == CONTROL_ENVELOPE_FLAG)
+	{
+		SystemFlags.control_flags &= ~CONTROL_ENVELOPE_FLAG;
+
+		HAL_TIM_Base_Stop_IT(&ENVELOPE_TIMER);
+		ENVELOPE_TIMER.Instance->ARR = SystemFlags.env_timing;
+
+
+		if (( SystemFlags.control_flags & CONTROL_ENVELOPE_LED ) == CONTROL_ENVELOPE_LED)
+		{
+			SystemFlags.control_flags &= ~CONTROL_ENVELOPE_LED;
+			draw_envelope_led(0);
+		}
+		else
+		{
+			SystemFlags.control_flags |= CONTROL_ENVELOPE_LED;
+			draw_envelope_led(1);
+		}
+		HAL_TIM_Base_Start_IT(&ENVELOPE_TIMER);
+
 	}
 }
 
